@@ -115,18 +115,18 @@ details for transactions
 
             discrepancies = recon.discrepancies()
 
+            #
+            #
+            # print(
+            #     type(missing_data_in_source),
+            #     "mds",
+            #     type(missing_data_in_target),
+            #     "mdt",
+            #     type(discrepancies),
+            #     "dc"
+            # )
 
-
-            print(
-                type(missing_data_in_source),
-                "mds",
-                type(missing_data_in_target),
-                "mdt",
-                type(discrepancies),
-                "dc"
-            )
-
-            print(missing_data_in_target.to_json(orient="records"))
+            # print(missing_data_in_target.to_json(orient="records"))
 
 
             #store my recon results

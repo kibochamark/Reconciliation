@@ -37,6 +37,9 @@ def data_normalization(df=None, dateformat="%Y-%m-%d"):
         print(e)
 
 
+        return  e
+
+
 
 
 
@@ -156,6 +159,8 @@ class ReportGenerator:
 
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
+            return e
+
 
     def to_csv(self):
         try:
@@ -182,7 +187,7 @@ class ReportGenerator:
             return csv_output
         except AttributeError as e:
             print(f"Attribute Error in to_csv: {e}")
-            return ""
+            return e
 
     def to_json(self):
         try:

@@ -122,11 +122,20 @@ class ReconciliationTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.json())
 
+    def test_invalid_report_type(self):
+        """Test API rejection of unsupported report types."""
+        recon = self.test_file_upload_valid_csv()
+        # print(recon)
+        response = self.client.post("/api/v1/recon/generate_report",
+                                    {"report_type": "XML", "report_task_id": recon})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+
     def test_result_generation_json(self):
         """Test if reconciliation results are correctly returned in JSON format."""
 
         recon=self.test_file_upload_valid_csv()
-        print(recon)
+        # print(recon)
 
         response = self.client.post("/api/v1/recon/generate_report", {"report_type": "JSON", "report_task_id": recon})
         # print(response["Content-Type"], response.status_code, response)
