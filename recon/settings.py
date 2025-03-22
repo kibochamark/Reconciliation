@@ -47,7 +47,10 @@ INSTALLED_APPS = [
     # Third party products
     'rest_framework',
     'django_filters',
-    "corsheaders"
+    "corsheaders",
+
+#     internal apps
+    'reconprocess'
 ]
 
 MIDDLEWARE = [
