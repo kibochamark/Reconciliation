@@ -1,10 +1,18 @@
-# Reconciliation System - README
+# Reconciliation System
 
 ## Overview
-The Reconciliation System is a Django REST API that processes two CSV files (Bank Statement & Cashbook) to identify:
+The Reconciliation System is a Django REST API that processes two CSV files (Source & Target) to identify:
 - Missing transactions in either file.
 - Discrepancies where amounts do not match.
 - A final reconciliation report in CSV, JSON, and HTML formats.
+
+## Features
+- **Upload Source & Target Files** (CSV format)
+- **Identify missing transactions**
+- **Detect discrepancies** (account mismatches, invalid entries, duplicates, etc.)
+- **Generate Reports** in JSON, CSV, and HTML formats
+- **Unit tests with test coverage**
+
 
 ## **Process Flow**
 Below is the high-level process flow of the reconciliation system:
@@ -21,62 +29,79 @@ Below is the high-level process flow of the reconciliation system:
 4. **Report Generation** → The system generates reconciliation results in CSV, JSON, and HTML.
 5. **User Downloads Results** → The user retrieves the reports via API.
 
-(Insert Process Flow Diagram Here)
+## File Format (CSV)
 
----
+### Sample Files
+- **[Download Sample Source CSV](https://drive.google.com/file/d/1GWB3bvnLiCLtsM3GkRIU2Y0NMlKAIYST/view?usp=sharing)**
+- **[Download Sample Target CSV](https://drive.google.com/file/d/1wwYUXCRrCO6hGfiwLqm6p1GE9TMeHf1t/view?usp=sharing)**
+Both source and target files should follow this structure:
 
-## **Installation & Setup**
-Follow these steps to set up the project:
+| Transaction ID | Transaction Date | Details    | Debit | Credit |
+|---------------|----------------|------------|-------|--------|
+| 1001         | 2024-03-01      | Payment A  | 500   | 0      |
+| 1002         | 2024-03-02      | Payment B  | 0     | 200    |
+| 1003         | 2024-03-03      | Payment C  | -100  | 100    |
 
-### **1. Clone the Repository**
-```bash
-git clone <repository_url>
+## Installation
+```sh
+# Clone the repository
+git clone https://github.com/kibochamark/Reconciliation.git
 cd reconciliation-system
-```
 
-### **2. Create a Virtual Environment & Install Dependencies**
-```bash
+# Set up virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-pip install -r requirements.txt
-```
 
-### **3. Run Migrations**
-```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run migrations
 python manage.py migrate
 ```
 
-### **4. Start the Development Server**
-```bash
+## Running the API
+```sh
+# Start the server
 python manage.py runserver
 ```
+The API will be available at: `http://127.0.0.1:8000/`
 
----
+## API Endpoints
+### 1. Upload CSV Files
+**POST** `/api/v1/recon/upload`
+- **Request:** `source_file` and `target_file` (CSV files)
+- **Response:** Returns a `task_id` for reference.
 
-## **API Endpoints**
-| Method | Endpoint | Description |
-|--------|---------|-------------|
-| POST | `/upload/` | Uploads two CSV files for reconciliation. |
-| GET | `/results/csv/` | Returns reconciliation report in CSV format. |
-| GET | `/results/json/` | Returns reconciliation report in JSON format. |
-| GET | `/results/html/` | Returns reconciliation report in HTML format. |
+### 2. Generate Reconciliation Report
+**POST** `/api/v1/recon/generate_report`
+- **Request:** `report_type` (JSON, CSV, HTML) & `report_task_id`
+- **Response:** The requested report.
+### 3. List of Reconciliation Tasks
+**GET** `/api/v1/recon/tasks`
+-**Params:** `status` (Pending, Failed, Completed) - optional
+-**Response** list of reconciled reports and their reconciliation status
 
----
 
-## **Running Tests**
-To ensure correctness, run the Django test suite:
-```bash
+
+## Running Tests & Coverage
+```sh
+# Run unit tests
 python manage.py test
+
+# Run coverage analysis
+coverage run manage.py test
+coverage report -m  # Show coverage report
+coverage html  # Generate HTML report
 ```
 
-### **Test Coverage**
-The tests cover:
-- **File Upload Validation** → Ensures valid CSV files are processed.
-- **Data Processing** → Checks if transactions are extracted correctly.
-- **Reconciliation Logic** → Confirms missing transactions and discrepancies are detected accurately.
+## Limitations
+- Only supports **CSV** file format.
+- Transactions must have **both debit and credit** fields.
+- Handles duplicates within the same dataset but may not match similar records across datasets.
+
+
 
 ---
-
 ## **Contributing**
 1. Fork the repository.
 2. Create a new feature branch.
