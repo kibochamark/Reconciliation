@@ -47,17 +47,3 @@ class ReconResult(models.Model):
     def __str__(self):
         return f"Results for Task {self.task.id}"
 
-    def save_dataframe_to_jsonfield(df, jsonfield_instance, field_name):
-        """
-        Converts a Pandas DataFrame to a JSON string and saves it to a JSONField.
-
-        Args:
-            df (pd.DataFrame): The DataFrame to convert.
-            jsonfield_instance: An instance of the model containing the JSONField
-                               (e.g., an instance of ReconResult).
-            field_name (str): The name of the JSONField in the model
-                              (e.g., 'missing_source', 'discrepancies').
-        """
-        json_data = df.to_json(orient='records')
-        setattr(jsonfield_instance, field_name, json.loads(json_data))
-        jsonfield_instance.save()  # Save the model instance
