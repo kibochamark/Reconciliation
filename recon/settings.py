@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     "corsheaders",
+    'drf_spectacular',
 
 #     internal apps
     'reconprocess'
@@ -153,3 +154,25 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Reconciliation APIS',
+    'DESCRIPTION': """
+    
+    The Reconciliation System is a Django REST API that processes two CSV files (Bank Statement & Cashbook) to identify:
+
+Missing transactions in either file.
+Discrepancies where amounts do not match.
+A final reconciliation report in CSV, JSON, and HTML formats.
+    """,
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # OTHER SETTINGS
+}

@@ -1,0 +1,121 @@
+openapi: 3.0.3
+info:
+  title: Reconciliation APIS
+  version: 1.0.0
+  description: "\n    \n    The Reconciliation System is a Django REST API that processes\
+    \ two CSV files (Bank Statement & Cashbook) to identify:\n\nMissing transactions\
+    \ in either file.\nDiscrepancies where amounts do not match.\nA final reconciliation\
+    \ report in CSV, JSON, and HTML formats.\n    "
+paths:
+  /api/v1/recon/generate_report:
+    post:
+      operationId: api_v1_recon_generate_report_create
+      tags:
+      - api
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Report'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Report'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/recon/recon/upload:
+    post:
+      operationId: api_v1_recon_recon_upload_create
+      tags:
+      - api
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SourceTarget'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SourceTarget'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          description: No response body
+components:
+  schemas:
+    FileData:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        file:
+          type: string
+          format: uri
+      required:
+      - file
+      - id
+    ReconStatusEnum:
+      enum:
+      - pending
+      - processing
+      - completed
+      - failed
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `processing` - Processing
+        * `completed` - Completed
+        * `failed` - Failed
+    Report:
+      type: object
+      properties:
+        report_type:
+          $ref: '#/components/schemas/ReportTypeEnum'
+        report_id:
+          type: integer
+        recon_status:
+          $ref: '#/components/schemas/ReconStatusEnum'
+      required:
+      - report_id
+      - report_type
+    ReportTypeEnum:
+      enum:
+      - CSV
+      - HTML
+      - JSON
+      type: string
+      description: |-
+        * `CSV` - csv
+        * `HTML` - html
+        * `JSON` - json
+    SourceTarget:
+      type: object
+      properties:
+        source_file:
+          allOf:
+          - $ref: '#/components/schemas/FileData'
+          writeOnly: true
+        target_file:
+          allOf:
+          - $ref: '#/components/schemas/FileData'
+          writeOnly: true
+      required:
+      - source_file
+      - target_file
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
