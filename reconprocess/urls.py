@@ -8,5 +8,8 @@ urlpatterns=[
         })),
         path("generate_report", ReconViewSet.as_view({
                 'post':"generate_report"
+        })),
+        path("list_recon_tasks", ReconViewSet.as_view({
+                'get':"list"
         }))
 ]

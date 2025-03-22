@@ -28,9 +28,23 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/v1/recon/list_recon_tasks:
+    get:
+      operationId: api_v1_recon_list_recon_tasks_list
+      description: Handles the GET request for listing ReconResults, with filtering.
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/v1/recon/recon/upload:
     post:
       operationId: api_v1_recon_recon_upload_create
+      description: Handle file uploads
       tags:
       - api
       requestBody:
@@ -80,12 +94,12 @@ components:
       properties:
         report_type:
           $ref: '#/components/schemas/ReportTypeEnum'
-        report_id:
+        report_task_id:
           type: integer
         recon_status:
           $ref: '#/components/schemas/ReconStatusEnum'
       required:
-      - report_id
+      - report_task_id
       - report_type
     ReportTypeEnum:
       enum:

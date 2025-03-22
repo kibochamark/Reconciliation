@@ -43,15 +43,19 @@ class SourceTargetSerializer(serializers.Serializer):
 
 class ReportSerializer(serializers.Serializer):
     report_type = serializers.ChoiceField(choices=[('CSV', 'csv'), ('HTML', 'html'), ('JSON', 'json')])
-    report_id = serializers.IntegerField()
-    recon_status = serializers.ChoiceField(choices=[
+    report_task_id = serializers.IntegerField()
+
+    required_fields=['report_type', 'report_task_id']
+
+
+
+class ReconFilterSerializer(serializers.Serializer):
+    created_at = serializers.DateField()
+    status = serializers.ChoiceField(choices=[
         ('pending', 'Pending'),
         ('processing', 'Processing'),
         ('completed', 'Completed'),
         ('failed', 'Failed'),
     ], required=False)
-
-    required_fields=['report_type', 'report_id', 'recon_status']
-
 
 

@@ -1,23 +1,54 @@
 import datetime
 import json
+import os
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
+import zipfile
+import io
 
 
+from django.shortcuts import get_object_or_404
+
+from reconprocess.filterset import ReconFilter
 from reconprocess.models import FileData, ReconTask, ReconResult
-from reconprocess.serializers import SourceTargetSerializer, ReconTaskSerializer, ReportSerializer
+from reconprocess.serializers import SourceTargetSerializer, ReconTaskSerializer, ReportSerializer, \
+    ReconFilterSerializer
 
 import pandas as pd
 
 from reconprocess.utils import data_normalization, PerformRecon, ReportGenerator
+from rest_framework.exceptions import ValidationError
 
 
 class ReconViewSet(ViewSet):
     parser_classes = [MultiPartParser, FormParser]
+
+    @extend_schema(
+        request=ReconFilterSerializer,
+        responses={200: {
+
+        }}
+    )
+    def list(self, request):
+        """
+        Handles the GET request for listing ReconResults, with filtering.
+        """
+        queryset = ReconTask.objects.all()  # Get the base queryset
+
+        filterset = ReconFilter(request.GET, queryset=queryset)  # Apply the filter
+        if filterset.is_valid():
+            queryset = filterset.qs  # Get the filtered queryset
+
+        serializer = ReconTaskSerializer(queryset, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
 
     @extend_schema(
         request=SourceTargetSerializer,
@@ -26,6 +57,19 @@ class ReconViewSet(ViewSet):
         }},
     )
     def create(self, request):
+        """
+        Handle file uploads
+        takes a source and target
+        This api is limited to csv files
+
+        both files should have the same name and number of columns
+        Columns expected include;
+        transaction Id
+amount(debit and credit)
+date
+details for transactions
+
+        """
         source_file = request.FILES.get('source_file')
         target_file = request.FILES.get('target_file')
 
@@ -101,35 +145,14 @@ class ReconViewSet(ViewSet):
 
                 }
             )
-            results.save()
 
-            #
-            # results_json = {
-            #     'missing_source': missing_data_in_source,
-            #     'missing_target': missing_data_in_target,
-            #     'discrepancies': discrepancies,
-            # }
-            #
-            #
-            # recon_task.results_json = results_json
+
             recon_task.status = 'completed'
             recon_task.end_time = datetime.datetime.now()
             recon_task.save()
-            #
-            # # Generate CSV and HTML files
-            # csv_content = pd.DataFrame(results_json['missing_source']).to_csv(index=False)
-            # html_content = pd.DataFrame(results_json['missing_source']).to_html()
-            #
-            # csv_file_path = os.path.join(settings.MEDIA_ROOT, f'results_{recon_task.id}.csv')
-            # html_file_path = os.path.join(settings.MEDIA_ROOT, f'results_{recon_task.id}.html')
-            #
-            # default_storage.save(csv_file_path, ContentFile(csv_content))
-            # default_storage.save(html_file_path, ContentFile(html_content))
-            #
-            # recon_task.results_csv_path = csv_file_path
-            # recon_task.results_html_path = html_file_path
-            # recon_task.save()
-            #
+
+            results.save()
+
             serializer = ReconTaskSerializer(recon_task)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -137,7 +160,7 @@ class ReconViewSet(ViewSet):
             recon_task.status = 'failed'
             recon_task.error={'error': str(e), status:status.HTTP_400_BAD_REQUEST}
             recon_task.save()
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e), "message": "The process has been saved with a status -failed"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -149,15 +172,70 @@ class ReconViewSet(ViewSet):
     }}
     )
     def generate_report(self, request):
+        """
+        Generate reconciliation report based on the file type -
+    This api is limited to 3 types csv, json, html
 
-        serializer_class = ReportSerializer(request.data)
+        """
+        try:
+            serializer = ReportSerializer(data=request.data)
 
-        if serializer_class.is_valid(raise_exception=True):
-            reports =get_object_or_404(ReconResult, id=request.data["report_id"])
+            if serializer.is_valid(raise_exception=True):
+                recon_task = get_object_or_404(ReconTask,
+                                               id=serializer.validated_data["report_task_id"])
+                if not recon_task:
+                    raise ValidationError("Reconciliation task not found.")
 
-        return Response(serializer_class.errors, status=status.HTTP_400_BAD_REQUEST)
+                # retrieve recon result
+                reports = ReconResult.objects.filter(task=recon_task).first()
 
-        # instantiate report generator
-        
-        
-        reportGenertor= ReportGenerator()
+                if not reports:
+                    raise ValidationError("No reports available, the reconciliation might have failed")
+
+                results = {
+                    "missing_records_in_source": reports.missing_source,
+                    "missing_records_in_target": reports.missing_target,
+                    "discrepancies": reports.discrepancies
+                }
+
+                report_generator = ReportGenerator(serializer.validated_data["report_type"],
+                                                   results)  # Access validated data
+
+                if serializer.validated_data["report_type"] == "CSV":  # Access validated data
+                    report_data = report_generator.to_csv()  #
+                    content_type = "text/csv"  #
+                    filename = "reconciliation_report.csv"
+
+
+                elif serializer.validated_data["report_type"] == "JSON":
+                    report_data = report_generator.to_json()
+                    content_type = "application/json"
+                    filename = "reconciliation_report.json"
+
+
+                elif serializer.validated_data["report_type"] == "HTML":
+                    report_data = report_generator.to_html()
+                    content_type = "text/html"
+                    filename = "reconciliation_report.html"
+
+
+                else:
+                    return Response(
+                        {"error": "Invalid report type"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                response = Response(report_data, content_type=content_type)
+                response["Content-Disposition"] = f'attachment; filename="{filename}"'
+                return response
+
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  # More specific error code
+
+
+
+
+
