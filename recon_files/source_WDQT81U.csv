@@ -1,5 +1,0 @@
-Transaction ID,Transaction Date,Details,Debit,Credit
-1001,2024-03-01,Payment A,500,0
-1002,2024-03-02,Payment B,0,200
-1003,2024-03-03,Payment C,-100,100
-1004,2024-03-04,Payment D,200,0
