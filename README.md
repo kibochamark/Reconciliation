@@ -55,9 +55,21 @@ source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 # Install dependencies
 pip install -r requirements.txt
 
+
+-- Rename sample env file to .env
+
+-- insert your own secret key
+
 # Run migrations
+python manage.py makemigrations
 python manage.py migrate
+
+
 ```
+
+
+
+
 
 ## Running the API
 ```sh
