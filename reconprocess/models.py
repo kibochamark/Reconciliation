@@ -39,6 +39,9 @@ class ReconResult(models.Model):
     missing_target = models.JSONField(null=True, blank=True)
     discrepancies = models.JSONField(null=True, blank=True)
 
+    gemini_recon_result= models.JSONField(null=True, blank=True)
+    gemini_generated = models.BooleanField(default=False)
+
 
     created_at=models.DateField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

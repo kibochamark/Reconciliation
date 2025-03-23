@@ -40,9 +40,9 @@ class ReconciliationTestCase(TestCase):
 
 
 
-    def test_file_upload_valid_csv(self):
+    def test_file_upload_valid_csv(self, use_gemini:bool = False):
         """Test if valid CSV files are accepted."""
-        response = self.client.post("/api/v1/recon/upload", {"source_file": self.source_csv, "target_file": self.target_csv})
+        response = self.client.post("/api/v1/recon/upload", {"source_file": self.source_csv, "target_file": self.target_csv, "use_gemini": use_gemini})
         self.assertEqual(response.status_code, 201)
         # print(response.json()['id'])
         self.assertIn("completed", response.json()["status"])
@@ -110,6 +110,32 @@ class ReconciliationTestCase(TestCase):
 
         # Ensure at least one expected discrepancy exists
         self.assertTrue(expected_types & found_types, "Expected discrepancy types were not found")
+
+        # Check expected number of discrepancies (adjust count based on dataset)
+        self.assertGreaterEqual(len(discrepancies), 1, "Expected at least one discrepancy")
+
+
+    def test_reconciliation_discrepant_transactions_from_gemini(self):
+        """Test if reconciliation detects missing transactions."""
+        source_df = pd.read_csv(io.BytesIO(self.source_csv.read()))
+        target_df = pd.read_csv(io.BytesIO(self.target_csv.read()))
+
+        # normalize data
+        normalize_source = data_normalization(source_df)
+        normalize_target = data_normalization(target_df)
+
+        # instantiate the Recon class  and pass our normalized data
+        recon = PerformRecon(normalize_source, normalize_target)
+
+
+        # Get discrepancies
+        discrepancies = recon.detect_discrepancies_using_gemini()
+
+        # Convert DataFrame to list of dictionaries
+        discrepancies = discrepancies.to_dict(orient="records")
+
+        # Ensure discrepancies is a list
+        self.assertIsInstance(discrepancies, list, "Discrepancies should be a list")
 
         # Check expected number of discrepancies (adjust count based on dataset)
         self.assertGreaterEqual(len(discrepancies), 1, "Expected at least one discrepancy")

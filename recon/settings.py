@@ -177,3 +177,6 @@ A final reconciliation report in CSV, JSON, and HTML formats.
     'SERVE_INCLUDE_SCHEMA': False,
     # OTHER SETTINGS
 }
+
+
+GENAI_API_KEY=os.getenv("GENAI_API_KEY")

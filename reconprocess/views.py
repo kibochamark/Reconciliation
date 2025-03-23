@@ -72,6 +72,7 @@ details for transactions
         """
         source_file = request.FILES.get('source_file')
         target_file = request.FILES.get('target_file')
+        use_gemini = request.data.get("use_gemini", False)
 
         if not source_file or not target_file:
             return Response({'error': 'Source and target files are required.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -110,41 +111,54 @@ details for transactions
             # instantiate the Recon class  and pass our normalized data
             recon = PerformRecon(normalize_source, normalize_target)
 
-            missing_data_in_source = recon.missing_in_source()
-            missing_data_in_target = recon.missing_in_target()
+            if use_gemini:
+                gemini_results= recon.detect_discrepancies_using_gemini()
+                results = ReconResult.objects.create(
+                    task=recon_task,
+                    gemini_recon_result={
+                        "records":gemini_results.to_json(orient="records")
+                    },
 
-            discrepancies = recon.discrepancies()
-
-            #
-            #
-            # print(
-            #     type(missing_data_in_source),
-            #     "mds",
-            #     type(missing_data_in_target),
-            #     "mdt",
-            #     type(discrepancies),
-            #     "dc"
-            # )
-
-            # print(missing_data_in_target.to_json(orient="records"))
+                    gemini_generated=True
+                )
+            else:
 
 
-            #store my recon results
-            results = ReconResult.objects.create(
-                task=recon_task,
-                missing_source={
-                    "records":missing_data_in_source.to_json(orient="records")
-                },
-                missing_target=
-                {
-                    "records": missing_data_in_target.to_json(orient="records")
-                },
-                discrepancies=
-                {
-                    "records":discrepancies.to_json(orient="records"),
+                missing_data_in_source = recon.missing_in_source()
+                missing_data_in_target = recon.missing_in_target()
 
-                }
-            )
+                discrepancies = recon.discrepancies()
+
+                #
+                #
+                # print(
+                #     type(missing_data_in_source),
+                #     "mds",
+                #     type(missing_data_in_target),
+                #     "mdt",
+                #     type(discrepancies),
+                #     "dc"
+                # )
+
+                # print(missing_data_in_target.to_json(orient="records"))
+
+
+                #store my recon results
+                results = ReconResult.objects.create(
+                    task=recon_task,
+                    missing_source={
+                        "records":missing_data_in_source.to_json(orient="records")
+                    },
+                    missing_target=
+                    {
+                        "records": missing_data_in_target.to_json(orient="records")
+                    },
+                    discrepancies=
+                    {
+                        "records":discrepancies.to_json(orient="records"),
+
+                    }
+                )
 
 
             recon_task.status = 'completed'
@@ -192,11 +206,20 @@ details for transactions
                 if not reports:
                     raise ValidationError("No reports available, the reconciliation might have failed")
 
+
+
                 results = {
                     "missing_records_in_source": reports.missing_source,
                     "missing_records_in_target": reports.missing_target,
                     "discrepancies": reports.discrepancies
                 }
+
+                if reports.gemini_generated:
+                    results={
+                        "discrepancies":reports.gemini_recon_result
+                    }
+
+
 
                 report_generator = ReportGenerator(serializer.validated_data["report_type"],
                                                    results)  # Access validated data

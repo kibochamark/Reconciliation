@@ -39,11 +39,13 @@ class ReconTaskSerializer(serializers.ModelSerializer):
 class SourceTargetSerializer(serializers.Serializer):
     source_file = FileDataSerializer(write_only=True)
     target_file = FileDataSerializer(write_only=True)
+    use_gemini = serializers.BooleanField(write_only=True)
 
 
 class ReportSerializer(serializers.Serializer):
     report_type = serializers.ChoiceField(choices=[('CSV', 'csv'), ('HTML', 'html'), ('JSON', 'json')])
     report_task_id = serializers.IntegerField()
+
 
     required_fields=['report_type', 'report_task_id']
 

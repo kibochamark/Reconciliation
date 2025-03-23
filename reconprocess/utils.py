@@ -11,6 +11,12 @@ import io
 import json
 import pandas as pd
 from bs4 import BeautifulSoup
+from google import genai
+from django.conf import  settings
+
+# access gemini api key
+
+client = genai.Client(api_key=settings.GENAI_API_KEY)
 
 def data_normalization(df=None, dateformat="%Y-%m-%d"):
     try:
@@ -50,6 +56,7 @@ class PerformRecon:
     def __init__(self, source, target):
         self.source=source
         self.target = target
+        self.client= client
 
 
     def missing_in_target(self):
@@ -117,6 +124,55 @@ class PerformRecon:
         except Exception as e:
             print(e)
             return e
+
+    def detect_discrepancies_using_gemini(self):
+        """Uses Gemini AI to analyze discrepancies in debit-credit transactions."""
+
+        prompt = f"""
+          Analyze the following financial transactions and identify discrepancies:
+          - Every debit should have a corresponding credit.
+          - Flag missing transactions in the source or target.
+          - Check if the balances mismatch.
+          - Identify any unusual patterns.
+          - Suggest possible balance adjustments to fix discrepancies.
+          The date of transaction might not have an effect at the report since some transactions might have been made but pending in queue until authorized to debit.
+          I believe this is how banks work.If the transactions look like bank related ensure to check if the date is important to have in the criterion
+
+          Source Transactions (Bank Statement):
+          {self.source.to_string(index=False)}
+
+          Target Transactions (Cashbook):
+          {self.target.to_string(index=False)}
+
+          Return a structured JSON output with:
+          - discrepancy_type
+          - affected_transaction
+          - explanation
+          - suggested_adjustment (if applicable)
+          """
+
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=[prompt]
+            )
+            discrepancies_report = response.text.strip()
+
+            # Convert response to JSON
+
+            if "json" in discrepancies_report:
+                discrepancies_report = discrepancies_report.replace("json", "")
+                discrepancies_report = discrepancies_report.replace("```", "")
+
+
+            df = pd.DataFrame(json.loads(discrepancies_report))
+
+            return df
+
+
+        except Exception as e:
+            print(f"Error in Gemini request: {e}")
+
 
 
 
