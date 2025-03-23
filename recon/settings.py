@@ -167,7 +167,7 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'Reconciliation APIS',
     'DESCRIPTION': """
     
-    The Reconciliation System is a Django REST API that processes two CSV files (Bank Statement & Cashbook) to identify:
+    The Reconciliation System is a Django REST API that processes two CSV files (Source & Target) to identify:
 
 Missing transactions in either file.
 Discrepancies where amounts do not match.
