@@ -124,8 +124,8 @@ details for transactions
             else:
 
 
-                missing_data_in_source = recon.missing_in_source()
-                missing_data_in_target = recon.missing_in_target()
+                missing_data_in_source = recon.missing_in_target_and_in_source()
+                missing_data_in_target = recon.missing_in_source_and_in_target()
 
                 discrepancies = recon.discrepancies()
 
