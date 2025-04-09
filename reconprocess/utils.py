@@ -59,7 +59,7 @@ class PerformRecon:
         self.client= client
 
 
-    def missing_in_target(self):
+    def missing_in_source_and_in_target(self):
         try:
 
             return self.target[~self.target["Transaction ID"].isin(self.source["Transaction ID"])]
@@ -68,7 +68,7 @@ class PerformRecon:
             print(e)
             return e
 
-    def missing_in_source(self):
+    def missing_in_target_and_in_source(self):
         try:
 
             return self.source[~self.source["Transaction ID"].isin(self.target["Transaction ID"])]
@@ -130,8 +130,7 @@ class PerformRecon:
 
         prompt = f"""
           Analyze the following financial transactions and identify discrepancies:
-          - Every debit should have a corresponding credit.
-          - Flag missing transactions in the source or target.
+          - Every credit should have a corresponding debit.
           - Check if the balances mismatch.
           - Identify any unusual patterns.
           - Suggest possible balance adjustments to fix discrepancies.
@@ -225,12 +224,12 @@ class ReportGenerator:
 
             if self.missing_source is not None:
                 source_df = self.missing_source.copy()
-                source_df.insert(0, 'Section', 'Missing in Source')
+                source_df.insert(0, 'Section', 'Missing in target and in source')
                 combined_data = pd.concat([combined_data, source_df], ignore_index=True)
 
             if self.missing_target is not None:
                 target_df = self.missing_target.copy()
-                target_df.insert(0, 'Section', 'Missing in Target')
+                target_df.insert(0, 'Section', 'Missing in source and in target')
                 combined_data = pd.concat([combined_data, target_df], ignore_index=True)
 
             if self.discrepancies is not None:
@@ -249,9 +248,9 @@ class ReportGenerator:
         try:
             report_data = {}
             if self.missing_source is not None:
-                report_data["missing_source"] = json.loads(self.missing_source.to_json(orient='records'))
+                report_data["'Missing in target and in source"] = json.loads(self.missing_source.to_json(orient='records'))
             if self.missing_target is not None:
-                report_data["missing_target"] = json.loads(self.missing_target.to_json(orient='records'))
+                report_data["'Missing in source and in target"] = json.loads(self.missing_target.to_json(orient='records'))
             if self.discrepancies is not None:
                 report_data["discrepancies"] = json.loads(self.discrepancies.to_json(orient='records'))
             return json.dumps(report_data)  # Return the entire JSON report
@@ -276,8 +275,8 @@ class ReportGenerator:
 
                 return html
 
-            html_report += process_dataframe(self.missing_source, "Missing in Source")
-            html_report += process_dataframe(self.missing_target, "Missing in Target")
+            html_report += process_dataframe(self.missing_source, "'Missing in target and in source")
+            html_report += process_dataframe(self.missing_target, "'Missing in source and in target")
             html_report += process_dataframe(self.discrepancies, "Discrepancies")
 
             return html_report
