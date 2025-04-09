@@ -63,15 +63,17 @@ pip install -r requirements.txt
 # Rename sample env file to .env
 #Copy the app secret keys from the link below and paste them into the .env file.
 # Make sure to replace placeholder values in the sample.env with actual values.
+```
 [Download App Secret Keys](https://docs.google.com/document/d/1JsscC0l5HU5hhhMX2_G6KXeiX1_TgODm978XJgVdKj8/edit?usp=sharing)
 
+```sh
 
 # Update the .env file accordingly
 
 # Run migrations
 python manage.py makemigrations
 python manage.py migrate
-```
+
 
 ## Running the API
 ```sh
