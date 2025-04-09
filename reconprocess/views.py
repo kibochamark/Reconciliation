@@ -111,7 +111,7 @@ details for transactions
             # instantiate the Recon class  and pass our normalized data
             recon = PerformRecon(normalize_source, normalize_target)
 
-            if use_gemini and use_gemini== "True":
+            if use_gemini and use_gemini.lower() == "true":
                 gemini_results= recon.detect_discrepancies_using_gemini()
                 results = ReconResult.objects.create(
                     task=recon_task,
